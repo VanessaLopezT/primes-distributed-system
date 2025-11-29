@@ -1,0 +1,30 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: new-service
+spec:
+  selector:
+    app: new-service
+  ports:
+    - port: 8000
+      targetPort: 8000
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: new-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: new-service
+  template:
+    metadata:
+      labels:
+        app: new-service
+    spec:
+      containers:
+        - name: new-service
+          image: primes/new-service:latest
+          ports:
+            - containerPort: 8000

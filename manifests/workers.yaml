@@ -1,0 +1,17 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: primes-worker
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: primes-worker
+  template:
+    metadata:
+      labels:
+        app: primes-worker
+    spec:
+      containers:
+        - name: primes-worker
+          image: primes/worker:latest
