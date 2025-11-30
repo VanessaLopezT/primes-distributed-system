@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: primes-worker
+  name: primes-workers
 spec:
   replicas: 3
   selector:
@@ -14,4 +14,15 @@ spec:
     spec:
       containers:
         - name: primes-worker
-          image: primes/worker:latest
+          image: vanessalopezt/primes-worker:1.0
+          env:
+            - name: REDIS_HOST
+              value: redis
+            - name: POSTGRES_HOST
+              value: postgres
+            - name: POSTGRES_DB
+              value: primesdb
+            - name: POSTGRES_USER
+              value: primesuser
+            - name: POSTGRES_PASSWORD
+              value: primespass

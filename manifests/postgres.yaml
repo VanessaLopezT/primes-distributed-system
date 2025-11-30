@@ -3,11 +3,11 @@ kind: Service
 metadata:
   name: postgres
 spec:
-  selector:
-    app: postgres
   ports:
     - port: 5432
-      targetPort: 5432
+  selector:
+    app: postgres
+
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -25,18 +25,13 @@ spec:
     spec:
       containers:
         - name: postgres
-          image: postgres:16
+          image: postgres:15
           env:
             - name: POSTGRES_DB
-              value: "primesdb"
+              value: primesdb
             - name: POSTGRES_USER
-              value: "postgres"
+              value: primesuser
             - name: POSTGRES_PASSWORD
-              value: "postgres"
-          volumeMounts:
-            - name: init-script
-              mountPath: /docker-entrypoint-initdb.d/
-      volumes:
-        - name: init-script
-          hostPath:
-            path: /mnt/data/db/scripts
+              value: primespass
+          ports:
+            - containerPort: 5432

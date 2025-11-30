@@ -3,16 +3,16 @@ import psycopg2
 import random
 import math
 import time
-
+import os
 # Conexiones
 
-redis_client = redis.Redis(host="redis", port=6379, db=0)
+redis_client = redis.Redis(host=os.getenv("REDIS_HOST", "redis"), port=6379, db=0)
 
 conn = psycopg2.connect(
-    host="postgres",
-    database="primesdb",
-    user="postgres",
-    password="postgres"
+    host=os.getenv("POSTGRES_HOST", "postgres"),
+    database=os.getenv("POSTGRES_DB", "primesdb"),
+    user=os.getenv("POSTGRES_USER", "primesuser"),
+    password=os.getenv("POSTGRES_PASSWORD", "primespass")
 )
 conn.autocommit = True
 

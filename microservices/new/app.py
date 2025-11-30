@@ -3,18 +3,21 @@ from pydantic import BaseModel
 import redis
 import psycopg2
 import uuid
-
+import os
 app = FastAPI()
 
-# Redis
-redis_client = redis.Redis(host="redis", port=6379, db=0)
-
+# Conexión a Redis usando la variable de entorno
+redis_client = redis.Redis(
+    host=os.getenv("REDIS_HOST", "redis"),
+    port=6379,
+    db=0
+)
 # Postgres connection
 conn = psycopg2.connect(
-    host="postgres",
-    database="primesdb",
-    user="postgres",
-    password="postgres"
+    host=os.getenv("POSTGRES_HOST", "postgres"),
+    database=os.getenv("POSTGRES_DB", "primesdb"),
+    user=os.getenv("POSTGRES_USER", "primesuser"),
+    password=os.getenv("POSTGRES_PASSWORD", "primespass")
 )
 conn.autocommit = True
 

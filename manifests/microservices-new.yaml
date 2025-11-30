@@ -1,30 +1,37 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: new-service
+  name: primes-new
 spec:
-  selector:
-    app: new-service
+  type: NodePort 
   ports:
-    - port: 8000
-      targetPort: 8000
+    - port: 5000
+      targetPort: 5000
+      nodePort: 30000
+    
+  selector:
+    app: primes-new
+
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: new-service
+  name: primes-new
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: new-service
+      app: primes-new
   template:
     metadata:
       labels:
-        app: new-service
+        app: primes-new
     spec:
       containers:
-        - name: new-service
-          image: primes/new-service:latest
+        - name: primes-new
+          image: vanessalopezt/primes-new:1.0
           ports:
-            - containerPort: 8000
+            - containerPort: 5000
+          env:
+            - name: REDIS_HOST
+              value: redis

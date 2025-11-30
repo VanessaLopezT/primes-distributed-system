@@ -1,13 +1,13 @@
 from fastapi import FastAPI
 import psycopg2
-
+import os
 app = FastAPI()
 
 conn = psycopg2.connect(
-    host="postgres",
-    database="primesdb",
-    user="postgres",
-    password="postgres"
+    host=os.getenv("POSTGRES_HOST", "postgres"),
+    database=os.getenv("POSTGRES_DB", "primesdb"),
+    user=os.getenv("POSTGRES_USER", "primesuser"),
+    password=os.getenv("POSTGRES_PASSWORD", "primespass")
 )
 conn.autocommit = True
 
