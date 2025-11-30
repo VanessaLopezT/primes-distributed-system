@@ -114,7 +114,9 @@ kubectl logs -n primes pod/primes-workers-667b5dd9bb-xp84h
 
 ## DOCUMENTACION de FastAPI de los microservicios 
 primes-new. ---> http://localhost:30000/docs
+
 primes-result. ---> http://localhost:30002/docs
+
 primes-status ---> http://localhost:30001/docs
 -
 -
