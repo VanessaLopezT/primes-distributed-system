@@ -1,4 +1,4 @@
-# 🔢 Distributed Prime Generator System
+# 🧮 Distributed Prime Generator System
 
 Sistema distribuido para generar números primos grandes usando microservicios, workers, Redis y PostgreSQL, desplegado sobre Kubernetes.
 
@@ -75,7 +75,7 @@ kubectl create namespace primes
 kubectl get namespaces
 ```
 
-### 4. Desplegar infraestructura (Redis y PostgreSQL)
+### 4. Desplegar los pods requeridos (Redis y PostgreSQL)
 
 ```bash
 # Aplicar el manifest de Redis al namespace
