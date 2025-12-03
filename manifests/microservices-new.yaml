@@ -29,9 +29,17 @@ spec:
     spec:
       containers:
         - name: primes-new
-          image: vanessalopezt/primes-new:1.0
+          image: stivenzxy/primes-new-ms:1.0
           ports:
             - containerPort: 5000
           env:
             - name: REDIS_HOST
               value: redis
+            - name: POSTGRES_HOST
+              value: postgres
+            - name: POSTGRES_DB
+              value: primesdb
+            - name: POSTGRES_USER
+              value: primesuser
+            - name: POSTGRES_PASSWORD
+              value: primespass

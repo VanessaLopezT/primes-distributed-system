@@ -4,7 +4,6 @@ import random
 import math
 import time
 import os
-# Conexiones
 
 redis_client = redis.Redis(host=os.getenv("REDIS_HOST", "redis"), port=6379, db=0)
 
@@ -15,9 +14,6 @@ conn = psycopg2.connect(
     password=os.getenv("POSTGRES_PASSWORD", "primespass")
 )
 conn.autocommit = True
-
-
-# Prueba de primalidad EXACTA (divisores <= sqrt)
 
 def is_prime(n: int) -> bool:
     if n < 2:
@@ -33,61 +29,46 @@ def is_prime(n: int) -> bool:
 
     return True
 
-
-# Generar número de N dígitos EXACTOS
-
 def generate_number_with_digits(d: int) -> int:
     start = 10 ** (d - 1)
     end = (10 ** d) - 1
     return random.randint(start, end)
 
 
-# Worker principal
-
 def process_item(item: str):
-    """
-    item viene en este formato: "requestId:digitos"
-    ejemplo: "80e9f3:12"
-    """
     request_id, digits = item.split(":")
     digits = int(digits)
 
     while True:
-        # Generar número
         candidate = generate_number_with_digits(digits)
 
-        # Verificar primalidad exacta
         if not is_prime(candidate):
             continue
 
-        # Verificar que NO esté repetido en la misma solicitud
-        with conn.cursor() as cur:
-            cur.execute(
-                "SELECT 1 FROM primes WHERE request_id = %s AND prime_number = %s",
-                (request_id, candidate)
-            )
-            exists = cur.fetchone()
+        with conn.cursor() as cur:                
+            cur.execute(                
+                """
+                INSERT INTO primes (request_id, prime_number) 
+                VALUES (%s, %s)
+                ON CONFLICT (request_id, prime_number) DO NOTHING
+                RETURNING 1;
+                """,                
+                (request_id, candidate)                
+            )                
+            
+            row = cur.fetchone()                
 
-            if exists:
-                # número repetido → generar otro
+            if row:                           
+                break                 
+            else:                
                 continue
 
-            # Si no existe → Insertarlo y terminar
-            cur.execute(
-                "INSERT INTO primes (request_id, prime_number) VALUES (%s, %s)",
-                (request_id, candidate)
-            )
-            break  # este item está completamente procesado
-
-
-# Loop infinito del worker
 
 if __name__ == "__main__":
     print("Worker iniciado...")
 
     while True:
         try:
-            # Esperar un item
             item = redis_client.brpop("prime_queue", timeout=5)
 
             if item is None:

@@ -28,7 +28,7 @@ spec:
     spec:
       containers:
         - name: primes-result
-          image: vanessalopezt/primes-result:1.0
+          image: stivenzxy/primes-result-ms:1.0
           ports:
             - containerPort: 5002
           env:
