@@ -1,199 +1,355 @@
-# Distributed Prime Generator System
+# 🔢 Distributed Prime Generator System
 
-Este repositorio contiene una arquitectura distribuida basada en microservicios, workers, una cola de mensajes y una base de datos, todo desplegado sobre Kubernetes.
+Sistema distribuido para generar números primos grandes usando microservicios, workers, Redis y PostgreSQL, desplegado sobre Kubernetes.
 
-## Componentes obligatorios incluidos en este proyecto
+---
 
-- Microservicio New recibe cantidad y dígitos y crea una solicitud.
-- Microservicio Status: informa el progreso de una solicitud.
-- Microservicio Result: entrega la lista de números primos generados.
-- Workers: consumen solicitudes desde la cola y generan números primos sin repetir por solicitud.
-- Base de Datos PostgreSQL
-- Cola de Mensajes Redis
-- Manifiestos de Kubernetes para todos los componentes.
+## 📋 Componentes del Proyecto
 
+| Componente | Descripción |
+|------------|-------------|
+| **Microservicio New** | Recibe cantidad y dígitos, crea una solicitud |
+| **Microservicio Status** | Informa el progreso de una solicitud |
+| **Microservicio Result** | Entrega la lista de números primos generados |
+| **Workers** | Consumen solicitudes desde la cola y generan números primos sin repetir |
+| **PostgreSQL** | Base de datos para almacenar solicitudes y resultados |
+| **Redis** | Cola de mensajes para distribuir el trabajo |
 
-   #                                             Primes Distributed System COMO MONTAR DESDE CERO
+---
 
-Este proyecto permite generar números primos grandes de manera distribuida usando microservicios, workers, Redis y PostgreSQL, desplegado en Kubernetes.
+## 🏗️ Arquitectura
 
-##              FASE 1:     IMÁGENES
--
--
--
--
+![Arquitectura del Sistema](docs/architect.png)
 
-**1️ Construir imágenes localmente**
+---
 
-Windows / PowerShell y Ubuntu/Linux:
+## 🐳 FASE 1: Construcción de Imágenes Docker
 
-docker build -t tuusuario/primes-new:1.0 ./microservices/new
-docker build -t tuusuario/primes-status:1.0 ./microservices/status
-docker build -t tuusuario/primes-result:1.0 ./microservices/result
-docker build -t tuusuario/primes-worker:1.0 ./workers
+### 1. Construir imágenes localmente
 
+```bash
+docker build -t stivenzxy/primes-new-ms:1.0 ./microservices/new
+docker build -t stivenzxy/primes-status-ms:1.0 ./microservices/status
+docker build -t stivenzxy/primes-result-ms:1.0 ./microservices/result
+docker build -t stivenzxy/wk-primes-generator:1.0 ./workers
+```
 
-**2 Loguearse en Docker Hub**
+### 2. Iniciar sesión en Docker Hub
 
+```bash
 docker login
+```
 
-**3 Subir las imágenes al repositorio**
+### 3. Subir imágenes al repositorio
 
-docker push tuusuario/primes-new:1.0
-docker push tuusuario/primes-status:1.0
-docker push tuusuario/primes-result:1.0
-docker push tuusuario/primes-worker:1.0
+```bash
+docker push stivenzxy/primes-new-ms:1.0
+docker push stivenzxy/primes-status-ms:1.0
+docker push stivenzxy/primes-result-ms:1.0
+docker push stivenzxy/wk-primes-generator:1.0
+```
 
+**Imágenes subidas en Docker Hub de manera pública:**
 
--
--
--
--
+![Docker Hub Repositories](docs/docker-hub-repos.png)
 
-##          FASE 2:     APLICAR EN KUBERNETES
+---
 
--
--
--
--
+## ☸️ FASE 2: Desplegar con Kubernetes
 
-**1 Crear namespace**
+### 1. Verificar el cluster
 
+```bash
+kubectl get nodes
+```
+
+### 2. Crear namespace
+
+```bash
 kubectl create namespace primes
+```
 
-**2 Aplicar los manifests de infraestructura (Redis y Postgres)**
+### 3. Verificar la creación del namespace
 
+```bash
+kubectl get namespaces
+```
+
+### 4. Desplegar infraestructura (Redis y PostgreSQL)
+
+```bash
+# Aplicar Redis
 kubectl apply -n primes -f manifests/redis.yaml
+
+# Inicializar base de datos con ConfigMap
+kubectl apply -n primes -f manifests/postgres-init-configmap.yaml
 kubectl apply -n primes -f manifests/postgres.yaml
+```
 
-**3 Inicializar la base de datos**
+### 5. Verificar que la infraestructura esté corriendo
 
-Copiar el script `init.sql` al pod:
-Windows / PowerShell:
+```bash
+kubectl get pods -n primes
+```
 
-powershell: 
-    kubectl cp db/scripts/init.sql primes/postgres-6f96978bb8-dg4g4:/init.sql -n primes
+### 6. Desplegar microservicios y workers
 
-Ubuntu / Linux:: 
-    kubectl cp db/scripts/init.sql primes/postgres-6f96978bb8-dg4g4:/init.sql -n primes
-
-
-**Entrar al pod y ejecutar psql:**
-
-kubectl exec -n primes -it postgres-6f96978bb8-dg4g4 -- psql -U primesuser -d primesdb
-
-
-Dentro de psql:
-
-\i /init.sql
-\dt         <----- Para verificar que las tablas se crearon
-
-
-### 4 Aplicar los manifests de microservicios
-
+```bash
 kubectl apply -n primes -f manifests/microservices-new.yaml
 kubectl apply -n primes -f manifests/microservices-status.yaml
 kubectl apply -n primes -f manifests/microservices-result.yaml
-
-### 5 Aplicar el manifest de workers
-
 kubectl apply -n primes -f manifests/workers.yaml
+```
 
-### 6 Verificar el estado de los pods
+### 7. Verificar el estado de todos los pods
 
+```bash
 kubectl get pods -n primes
+```
 
-### 7 Revisar logs de pods para identificar errores
+> ⚠️ **IMPORTANTE:** Para realizar pruebas, **todos los pods deben tener el status `READY 1/1`** y estar en estado `Running`.
 
-kubectl logs -n primes pod/primes-new-6cf876f5b7-4knrl
-kubectl logs -n primes pod/primes-status-76765449c-9stkh
-kubectl logs -n primes pod/primes-result-c78fff485-zwktj
-kubectl logs -n primes pod/primes-workers-667b5dd9bb-xp84h
+**Salida esperada:**
+```
+NAME                              READY   STATUS    RESTARTS   AGE
+postgres-xxxxx-xxxxx              1/1     Running   0          2m
+redis-xxxxx-xxxxx                 1/1     Running   0          2m
+primes-new-xxxxx-xxxxx            1/1     Running   0          1m
+primes-status-xxxxx-xxxxx         1/1     Running   0          1m
+primes-result-xxxxx-xxxxx         1/1     Running   0          1m
+primes-workers-xxxxx-xxxxx        1/1     Running   0          1m
+primes-workers-xxxxx-yyyyy        1/1     Running   0          1m
+primes-workers-xxxxx-zzzzz        1/1     Running   0          1m
+```
 
-### 8 Documentación de FastAPI de los microservicios
+### 8. Verificar servicios expuestos
 
-## DOCUMENTACION de FastAPI de los microservicios 
-primes-new. ---> http://localhost:30000/docs
+```bash
+kubectl get svc -n primes
+```
 
-primes-result. ---> http://localhost:30002/docs
+### 9. Ver logs de los pods (para debugging)
 
-primes-status ---> http://localhost:30001/docs
--
--
--
--
+```bash
+# Logs de los workers
+kubectl logs -n primes -l app=primes-worker --tail=50
 
-##              FASE 3:     PRUEBAS
+# Logs de un microservicio específico
+kubectl logs -n primes -l app=primes-new --tail=20
+```
 
--
--
--
--
+---
 
-### 1 Crear nueva solicitud (POST)
+## 📖 Documentación de la API (FastAPI)
 
-**Windows / PowerShell:**
+| Microservicio | URL Swagger |
+|---------------|-------------|
+| primes-new | http://localhost:30000/docs |
+| primes-status | http://localhost:30001/docs |
+| primes-result | http://localhost:30002/docs |
 
-powershell: 
-    Invoke-RestMethod -Method Post -Uri http://localhost:30000/new `
-    -Headers @{ "Content-Type" = "application/json" } `
-    -Body '{"cantidad":10,"digitos":12}'
+---
 
+## 🧪 FASE 3: Pruebas
 
-Ubuntu / Linux:
-    curl -X POST http://localhost:30000/new \
-    -H "Content-Type: application/json" \
-    -d '{"cantidad":10,"digitos":12}'
+### Endpoints disponibles
 
+| Método | Endpoint | Descripción |
+|--------|----------|-------------|
+| `POST` | `/new` | Crear nueva solicitud de primos |
+| `GET` | `/status/{id}` | Consultar progreso de la solicitud |
+| `GET` | `/result/{id}` | Obtener los números primos generados |
 
-### 2 Obtener resultados -----  Reemplaza `<ID>` con el ID que devuelve el POST.
+### 1. Crear nueva solicitud (POST)
 
-### PUEDES SI QUIERES USAR SIMPLEMENTE el script
+```bash
+curl -w "\n" -X POST http://localhost:30000/new \
+  -H "Content-Type: application/json" \
+  -d '{"cantidad":5,"digitos":12}'
+```
 
-powershell:
-    Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
-    .\get-primes.ps1
+**Ejemplo de salida:**
+```json
+{"id":"e147f6ec-50bd-4eb8-8bb1-77d5d6c1662d"}
+```
 
+### 2. Consultar estado de la solicitud (GET)
 
- Ubuntu:
-    sudo apt update && sudo apt install -y jq
-    chmod +x get-primes.sh
-    ./get-primes.sh
+```bash
+curl -s http://localhost:30001/status/<ID> | jq
+```
 
+**Ejemplo de salida:**
+```json
+{
+  "total": 5,
+  "actual": 5
+}
+```
 
-### O PROBAR TODO CON LOS SIGUINTES COMANDOS: -----  Reemplaza `<ID>` con el ID que devuelve el POST.
+> - `total`: número total de primos solicitados
+> - `actual`: número de primos generados hasta el momento
 
-Windows / PowerShell:
-powershell:
-    Invoke-RestMethod -Method Get -Uri "http://localhost:30002/result/<ID>"     <----- Reemplaza `<ID>` con el ID que devuelve el POST. 
+### 3. Obtener resultados (GET)
 
+```bash
+curl -s http://localhost:30002/result/<ID> | jq
+```
 
-Ubuntu / Linux:
-    curl http://localhost:30002/result/<ID>     <----- Reemplaza `<ID>` con el ID que devuelve el POST. 
+**Ejemplo de salida:**
+```json
+[
+  611256897851,
+  408660489031,
+  597625133513,
+  945069847651,
+  439758590801
+]
+```
 
+---
 
-Ejemplo:
-powershell: 
-    Invoke-RestMethod -Method Get -Uri "http://localhost:30002/result/740fa159-858e-4cdd-aa8f-d7db5d15e46b"
+## 💡 Ejemplos Completos de Uso
 
+### Ejemplo 1: Solicitar 5 primos de 12 dígitos
 
-### 3 Consultar estado de la solicitud -----  Reemplaza `<ID>` con el ID que devuelve el POST.
+```bash
+# 1. Crear solicitud
+curl -w "\n" -X POST http://localhost:30000/new \
+  -H "Content-Type: application/json" \
+  -d '{"cantidad":5,"digitos":12}'
+```
+**Salida:**
+```json
+{"id":"e147f6ec-50bd-4eb8-8bb1-77d5d6c1662d"}
+```
 
-Devuelve:
+```bash
+# 2. Verificar estado
+curl -s http://localhost:30001/status/e147f6ec-50bd-4eb8-8bb1-77d5d6c1662d | jq
+```
+**Salida:**
+```json
+{
+  "total": 5,
+  "actual": 5
+}
+```
 
-> * `total` = número total de primos solicitados
-> * `actual` = número de primos generados hasta el momento
+```bash
+# 3. Obtener resultados
+curl -s http://localhost:30002/result/e147f6ec-50bd-4eb8-8bb1-77d5d6c1662d | jq
+```
+**Salida:**
+```json
+[
+  611256897851,
+  408660489031,
+  597625133513,
+  945069847651,
+  439758590801
+]
+```
 
-Windows / PowerShell:
-powershell
-    nvoke-RestMethod -Method Get -Uri http://localhost:30001/status/<ID> <----- Reemplaza `<ID>` con el ID que devuelve el POST. 
+---
 
-Ubuntu / Linux:
-    curl http://localhost:30001/status/<ID> <----- Reemplaza `<ID>` con el ID que devuelve el POST. 
+### Ejemplo 2: Solicitar 10 primos de 15 dígitos
 
+```bash
+# 1. Crear solicitud
+curl -w "\n" -X POST http://localhost:30000/new \
+  -H "Content-Type: application/json" \
+  -d '{"cantidad":10,"digitos":15}'
+```
+**Salida:**
+```json
+{"id":"c299d19e-d910-4c46-aba7-52bb31b934ce"}
+```
 
-Ejemplo:
+```bash
+# 2. Verificar estado
+curl -s http://localhost:30001/status/c299d19e-d910-4c46-aba7-52bb31b934ce | jq
+```
+**Salida:**
+```json
+{
+  "total": 10,
+  "actual": 10
+}
+```
 
-powershell
-Invoke-RestMethod -Method Get -Uri http://localhost:30001/status/740fa159-858e-4cdd-aa8f-d7db5d15e46b
+```bash
+# 3. Obtener resultados
+curl -s http://localhost:30002/result/c299d19e-d910-4c46-aba7-52bb31b934ce | jq
+```
+**Salida:**
+```json
+[
+  295231390366207,
+  379067292536731,
+  527601196433111,
+  568336811877431,
+  904973483258297,
+  421484618049749,
+  890170635555791,
+  322117776289117,
+  104778649876001,
+  306100746463723
+]
+```
+
+---
+
+## 🛠️ Comandos Útiles
+
+```bash
+# Ver todos los recursos en el namespace
+kubectl get all -n primes
+
+# Reiniciar los workers
+kubectl rollout restart deployment/primes-workers -n primes
+
+# Eliminar todo el namespace (limpiar)
+kubectl delete namespace primes
+
+# Ver logs en tiempo real de los workers
+kubectl logs -n primes -l app=primes-worker -f --tail=20
+```
+
+---
+
+## 📁 Estructura del Proyecto
+
+```
+primes-distributed-system/
+├── microservices/
+│   ├── new/
+│   │   ├── app.py
+│   │   ├── Dockerfile
+│   │   └── requirements.txt
+│   ├── result/
+│   │   ├── app.py
+│   │   ├── Dockerfile
+│   │   └── requirements.txt
+│   └── status/
+│       ├── app.py
+│       ├── Dockerfile
+│       └── requirements.txt
+├── workers/
+│   ├── worker.py
+│   ├── Dockerfile
+│   └── requirements.txt
+├── manifests/
+│   ├── redis.yaml
+│   ├── postgres.yaml
+│   ├── postgres-init-configmap.yaml
+│   ├── microservices-new.yaml
+│   ├── microservices-status.yaml
+│   ├── microservices-result.yaml
+│   └── workers.yaml
+├── db/
+│   └── scripts/
+│       └── init.sql
+└── README.md
+```
 
