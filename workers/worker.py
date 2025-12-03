@@ -45,23 +45,24 @@ def process_item(item: str):
         if not is_prime(candidate):
             continue
 
-        with conn.cursor() as cur:                
-            cur.execute(                
-                """
-                INSERT INTO primes (request_id, prime_number) 
-                VALUES (%s, %s)
-                ON CONFLICT (request_id, prime_number) DO NOTHING
-                RETURNING 1;
-                """,                
-                (request_id, candidate)                
-            )                
-            
-            row = cur.fetchone()                
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT 1 FROM primes WHERE request_id = %s AND prime_number = %s",
+                (request_id, candidate)
+            )
 
-            if row:                           
-                break                 
-            else:                
+            exists = cur.fetchone()
+
+            if exists:
                 continue
+
+            cur.execute(
+
+                "INSERT INTO primes (request_id, prime_number) VALUES (%s, %s)",
+                (request_id, candidate)
+            )
+
+            break
 
 
 if __name__ == "__main__":
