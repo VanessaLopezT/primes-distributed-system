@@ -1,5 +1,3 @@
-#!/bin/bash
-
 # Cantidad de primos y número de dígitos
 cantidad=10
 digitos=12
@@ -19,7 +17,7 @@ fi
 
 echo "Solicitud creada. ID: $id"
 
-# Esperar y mostrar estado mientras se procesan los primos
+# Esperar y consultar estado progresivamente
 actual=0
 total=0
 
@@ -32,7 +30,7 @@ while [ "$actual" -lt "$cantidad" ]; do
     echo "Estado actual: $actual de $total primos generados"
 done
 
-# Obtener resultados finales
+# Obtener resultados 
 result=$(curl -s "http://localhost:30002/result/$id")
 
 if [ -z "$result" ]; then

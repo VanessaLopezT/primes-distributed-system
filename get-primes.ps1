@@ -1,4 +1,4 @@
-# Cantidad de primos y número de dígitos
+# Ejemplo de solicitud
 $cantidad = 10
 $digitos = 12
 
@@ -15,7 +15,7 @@ try {
 $id = $response.id
 Write-Host "Solicitud creada. ID:" $id
 
-# Esperar y mostrar estado mientras se procesan los primos
+# Esperar y consultar estado progresivamente
 do {
     Start-Sleep -Seconds 2
     try {
@@ -27,7 +27,7 @@ do {
     }
 } while ($status.actual -lt $status.total)
 
-# Obtener resultados finales
+# Obtener resultados 
 try {
     $result = Invoke-RestMethod -Method Get -Uri "http://localhost:30002/result/$id"
 } catch {
