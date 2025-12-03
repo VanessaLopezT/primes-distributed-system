@@ -78,7 +78,7 @@ kubectl get namespaces
 ### 4. Desplegar infraestructura (Redis y PostgreSQL)
 
 ```bash
-# Aplicar Redis
+# Aplicar el manifest de Redis al namespace
 kubectl apply -n primes -f manifests/redis.yaml
 
 # Inicializar base de datos con ConfigMap
@@ -86,7 +86,7 @@ kubectl apply -n primes -f manifests/postgres-init-configmap.yaml
 kubectl apply -n primes -f manifests/postgres.yaml
 ```
 
-### 5. Verificar que la infraestructura esté corriendo
+### 5. Verificar que los pods esten corriendo
 
 ```bash
 kubectl get pods -n primes
@@ -107,19 +107,19 @@ kubectl apply -n primes -f manifests/workers.yaml
 kubectl get pods -n primes
 ```
 
-> ⚠️ **IMPORTANTE:** Para realizar pruebas, **todos los pods deben tener el status `READY 1/1`** y estar en estado `Running`.
+>  **IMPORTANTE:** Para realizar pruebas, **todos los pods deben tener el status `READY 1/1`** y estar en estado `Running`.
 
 **Salida esperada:**
 ```
-NAME                              READY   STATUS    RESTARTS   AGE
-postgres-xxxxx-xxxxx              1/1     Running   0          2m
-redis-xxxxx-xxxxx                 1/1     Running   0          2m
-primes-new-xxxxx-xxxxx            1/1     Running   0          1m
-primes-status-xxxxx-xxxxx         1/1     Running   0          1m
-primes-result-xxxxx-xxxxx         1/1     Running   0          1m
-primes-workers-xxxxx-xxxxx        1/1     Running   0          1m
-primes-workers-xxxxx-yyyyy        1/1     Running   0          1m
-primes-workers-xxxxx-zzzzz        1/1     Running   0          1m
+NAME                          READY   STATUS    RESTARTS   AGE
+postgres-xxx-xxx              1/1     Running   0          2m
+redis-xxx-xxx                 1/1     Running   0          2m
+primes-new-xxx-xxx            1/1     Running   0          1m
+primes-status-xxx-xxx         1/1     Running   0          1m
+primes-result-xxx-xxx         1/1     Running   0          1m
+primes-workers-xxx-xxx        1/1     Running   0          1m
+primes-workers-xxx-yyy        1/1     Running   0          1m
+primes-workers-xxx-zzz        1/1     Running   0          1m
 ```
 
 ### 8. Verificar servicios expuestos
@@ -131,10 +131,10 @@ kubectl get svc -n primes
 ### 9. Ver logs de los pods (para debugging)
 
 ```bash
-# Logs de los workers
+# Visualizar logs de los workers
 kubectl logs -n primes -l app=primes-worker --tail=50
 
-# Logs de un microservicio específico
+# Visualizar logs de un pod especifico
 kubectl logs -n primes -l app=primes-new --tail=20
 ```
 
@@ -176,7 +176,7 @@ curl -w "\n" -X POST http://localhost:30000/new \
 ### 2. Consultar estado de la solicitud (GET)
 
 ```bash
-curl -s http://localhost:30001/status/<ID> | jq
+curl -s http://localhost:30001/status/<id> | jq
 ```
 
 **Ejemplo de salida:**
@@ -193,7 +193,7 @@ curl -s http://localhost:30001/status/<ID> | jq
 ### 3. Obtener resultados (GET)
 
 ```bash
-curl -s http://localhost:30002/result/<ID> | jq
+curl -s http://localhost:30002/result/<id> | jq
 ```
 
 **Ejemplo de salida:**
@@ -209,54 +209,10 @@ curl -s http://localhost:30002/result/<ID> | jq
 
 ---
 
-## 💡 Ejemplos Completos de Uso
-
-### Ejemplo 1: Solicitar 5 primos de 12 dígitos
+## 📌 Ejemplo: Solicitar 10 primos de 15 dígitos
 
 ```bash
-# 1. Crear solicitud
-curl -w "\n" -X POST http://localhost:30000/new \
-  -H "Content-Type: application/json" \
-  -d '{"cantidad":5,"digitos":12}'
-```
-**Salida:**
-```json
-{"id":"e147f6ec-50bd-4eb8-8bb1-77d5d6c1662d"}
-```
-
-```bash
-# 2. Verificar estado
-curl -s http://localhost:30001/status/e147f6ec-50bd-4eb8-8bb1-77d5d6c1662d | jq
-```
-**Salida:**
-```json
-{
-  "total": 5,
-  "actual": 5
-}
-```
-
-```bash
-# 3. Obtener resultados
-curl -s http://localhost:30002/result/e147f6ec-50bd-4eb8-8bb1-77d5d6c1662d | jq
-```
-**Salida:**
-```json
-[
-  611256897851,
-  408660489031,
-  597625133513,
-  945069847651,
-  439758590801
-]
-```
-
----
-
-### Ejemplo 2: Solicitar 10 primos de 15 dígitos
-
-```bash
-# 1. Crear solicitud
+# 1. Crear solicitud utilizando el microservicio expuesto "primes-new-ms"
 curl -w "\n" -X POST http://localhost:30000/new \
   -H "Content-Type: application/json" \
   -d '{"cantidad":10,"digitos":15}'
@@ -267,7 +223,7 @@ curl -w "\n" -X POST http://localhost:30000/new \
 ```
 
 ```bash
-# 2. Verificar estado
+# 2. Verificar estado utilizando el microservicio expuesto "primes-status-ms"
 curl -s http://localhost:30001/status/c299d19e-d910-4c46-aba7-52bb31b934ce | jq
 ```
 **Salida:**
@@ -279,7 +235,7 @@ curl -s http://localhost:30001/status/c299d19e-d910-4c46-aba7-52bb31b934ce | jq
 ```
 
 ```bash
-# 3. Obtener resultados
+# 3. Obtener resultados utilizando el microservicio expuesto "primes-result-ms"
 curl -s http://localhost:30002/result/c299d19e-d910-4c46-aba7-52bb31b934ce | jq
 ```
 **Salida:**
@@ -300,7 +256,7 @@ curl -s http://localhost:30002/result/c299d19e-d910-4c46-aba7-52bb31b934ce | jq
 
 ---
 
-## 🛠️ Comandos Útiles
+## 🛠️ Comandos Relevantes
 
 ```bash
 # Ver todos los recursos en el namespace
@@ -309,11 +265,11 @@ kubectl get all -n primes
 # Reiniciar los workers
 kubectl rollout restart deployment/primes-workers -n primes
 
-# Eliminar todo el namespace (limpiar)
+# Eliminar todo el namespace 
 kubectl delete namespace primes
 
 # Ver logs en tiempo real de los workers
-kubectl logs -n primes -l app=primes-worker -f --tail=20
+kubectl logs -n primes -l app=primes-worker -f --tail=50
 ```
 
 ---
