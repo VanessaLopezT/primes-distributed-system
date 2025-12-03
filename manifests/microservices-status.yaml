@@ -28,7 +28,7 @@ spec:
     spec:
       containers:
         - name: primes-status
-          image: vanessalopezt/primes-status:1.0
+          image: stivenzxy/primes-status-ms:1.0
           ports:
             - containerPort: 5001
           env:

@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: primes-worker
-          image: vanessalopezt/primes-worker:1.0
+          image: stivenzxy/wk-primes-generator:1.0
           env:
             - name: REDIS_HOST
               value: redis
